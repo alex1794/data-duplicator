@@ -6,6 +6,11 @@
 #include <time.h>
 
 
+double elapsed(struct timespec start, struct timespec stop)
+{
+    return (double)stop.tv_sec - (double)start.tv_sec + ( (double)stop.tv_nsec - (double)start.tv_nsec )*1e-9;
+}
+
 int main(int argc, char **argv)
 {
     int opt;
@@ -66,14 +71,14 @@ int main(int argc, char **argv)
 		write(fd, buf, bs);
 	clock_gettime(CLOCK_MONOTONIC_RAW, &stop);
 
-	double wrtime = (double)stop.tv_sec - (double)start.tv_sec + ( (double)stop.tv_nsec - (double)start.tv_nsec)*1e-9;
+	double wrtime = elapsed(start, stop);
     double wrbw = filesize / wrtime;
-	printf("Write of %.2lfG file : %lf secondes, %lf Go/s\n", filesize, (double)stop.tv_sec - (double)start.tv_sec + ( (double)stop.tv_nsec - (double)start.tv_nsec)*1e-9, wrbw);
+	printf("Write of %.2lfG file : %lf secondes, %lf Go/s\n", filesize, wrtime, wrbw);
 	
 	clock_gettime(CLOCK_MONOTONIC_RAW, &start);
 	close(fd);
 	clock_gettime(CLOCK_MONOTONIC_RAW, &stop);
-	printf("Close time of %s : %lf secondes\n", filename, (double)stop.tv_sec - (double)start.tv_sec + ( (double)stop.tv_nsec - (double)start.tv_nsec)*1e-9);
+	printf("Close time of %s : %lf secondes\n", filename, elapsed(start, stop);
 
 	return 0;
 }
