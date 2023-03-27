@@ -71,7 +71,8 @@ int main(int argc, char **argv)
 	clock_gettime(CLOCK_MONOTONIC_RAW, &start);
 	for(int i = 0; i < count; ++i)
 		write(fd, buf, bs);
-	clock_gettime(CLOCK_MONOTONIC_RAW, &stop);
+	fsync(fd);
+    clock_gettime(CLOCK_MONOTONIC_RAW, &stop);
 
 	double wrtime = elapsed(start, stop);
     double wrbw = filesize / wrtime;
