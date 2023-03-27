@@ -13,6 +13,8 @@ double elapsed(struct timespec start, struct timespec stop)
 
 int main(int argc, char **argv)
 {
+    srand(getpid());
+
     int opt;
 	char filename[50];
 	unsigned int bs = 0, count = 0;
@@ -55,9 +57,9 @@ int main(int argc, char **argv)
 
 	struct timespec start, stop;
     double filesize = (double)bs*count*1e-9;
-	char buf[bs];
-	memset(buf, 0, sizeof(buf));
-	buf[bs-1] = '\0';
+	char *buf = malloc(sizeof(char) * bs);
+    for(int i = 0; i < bs; ++i)
+        buf[i] = rand() % 100;	
 
 	int fd = open(filename, O_RDWR | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
 	if(!fd)
@@ -74,11 +76,13 @@ int main(int argc, char **argv)
 	double wrtime = elapsed(start, stop);
     double wrbw = filesize / wrtime;
 	printf("Write of %.2lfG file : %lf secondes, %lf Go/s\n", filesize, wrtime, wrbw);
+
+    free(buf);
 	
 	clock_gettime(CLOCK_MONOTONIC_RAW, &start);
 	close(fd);
 	clock_gettime(CLOCK_MONOTONIC_RAW, &stop);
-	printf("Close time of %s : %lf secondes\n", filename, elapsed(start, stop);
+	printf("Close time of %s : %lf secondes\n", filename, elapsed(start, stop));
 
 	return 0;
 }
