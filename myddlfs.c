@@ -133,8 +133,9 @@ int main(int argc, char **argv)
 	if(argc <= 1)
 		return printf("Usage: %s -m mode -f filepath -b blocksize -c number of block\n", argv[0]), 1;
 
-	printf("%c - %s - %d - %d\n", mode, filename, bs, count);
+	printf("%c - %s - %d - %d\n\n", mode, filename, bs, count);
 
+#ifndef BENCH
     if(mode == 'w')
         write_file(filename, bs, count);
     else if (mode == 'r')
@@ -144,6 +145,19 @@ int main(int argc, char **argv)
         fprintf(stderr, "Bad mode : read mode (r) and write mode (w)\n");
         exit(EXIT_FAILURE);
     }
+#else
+    if(mode == 'w')
+        for(int i = 0; i < 10; ++i)
+            write_file(filename, bs, count);
+    else if (mode == 'r')
+        for(int i = 0; i < 10; ++i)
+            read_file(filename, bs);
+    else
+    {
+        fprintf(stderr, "Bad mode : read mode (r) and write mode (w)\n");
+        exit(EXIT_FAILURE);
+    }
+#endif
 
 	return 0;
 }
