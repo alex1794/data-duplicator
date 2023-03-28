@@ -25,10 +25,10 @@ void write_file(char *filename, unsigned int bs, unsigned int count)
     filesize *= funit[factor]; // for good unit representation
 #endif
 	char *buf = malloc(sizeof(char) * bs);
-    for(int i = 0; i < bs; ++i)
-        buf[i] = rand() % 100;	
+    for(unsigned int i = 0; i < bs; ++i)
+        buf[i] = rand() % 100;
 
-	int fd = open(filename, O_RDWR | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
+    int fd = open(filename, O_RDWR | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
 	if(!fd)
 	{
 		perror("open fd");
@@ -36,7 +36,7 @@ void write_file(char *filename, unsigned int bs, unsigned int count)
 	}
 
 	clock_gettime(CLOCK_MONOTONIC_RAW, &start);
-	for(int i = 0; i < count; ++i)
+	for(unsigned int i = 0; i < count; ++i)
 		write(fd, buf, bs);
 	fsync(fd);
     clock_gettime(CLOCK_MONOTONIC_RAW, &stop);
@@ -71,7 +71,7 @@ void read_file(char *filename, unsigned int bs)
 	}
 
     off_t filesize = lseek(fd, 0, SEEK_END);
-    //printf("Filesize : %lu bytes\n", filesize);
+    printf("Filesize : %lu bytes\n", filesize);
     lseek(fd, 0, SEEK_SET);
 
 	clock_gettime(CLOCK_MONOTONIC_RAW, &start);
@@ -147,7 +147,7 @@ int main(int argc, char **argv)
         if(argc != 1)
 		    return printf("Usage: ./mydd [-m mode] [-b blocksize] [-c number of block] filename\n"), 1;
 
-        if(sscanf(argv[0], "%s", &filename) != 1)
+        if(sscanf(argv[0], "%s", filename) != 1)
 		{
 			fprintf(stderr, "%s: bad filename\n", argv[0]);
 			return 1;
