@@ -40,10 +40,10 @@ void write_file(char *filename, unsigned int bs, unsigned int count)
 
     free(buf);
 	
-	clock_gettime(CLOCK_MONOTONIC_RAW, &start);
+	//clock_gettime(CLOCK_MONOTONIC_RAW, &start);
 	close(fd);
-	clock_gettime(CLOCK_MONOTONIC_RAW, &stop);
-	printf("Close time of %s : %lf secondes\n", filename, elapsed(start, stop));
+	//clock_gettime(CLOCK_MONOTONIC_RAW, &stop);
+	//printf("Close time of %s : %lf seconds\n", filename, elapsed(start, stop));
 }
 
 void read_file(char *filename, unsigned int bs)
@@ -76,10 +76,10 @@ void read_file(char *filename, unsigned int bs)
 
     free(buf);
 	
-	clock_gettime(CLOCK_MONOTONIC_RAW, &start);
+	//clock_gettime(CLOCK_MONOTONIC_RAW, &start);
 	close(fd);
-	clock_gettime(CLOCK_MONOTONIC_RAW, &stop);
-	printf("Close time of %s : %lf secondes\n", filename, elapsed(start, stop));
+	//clock_gettime(CLOCK_MONOTONIC_RAW, &stop);
+	//printf("Close time of %s : %lf seconds\n", filename, elapsed(start, stop));
        
 }    
 
@@ -89,24 +89,17 @@ int main(int argc, char **argv)
 
     int opt;
 	char filename[50];
-	unsigned int bs = 0;
-    unsigned int count = 0;
-    char mode = 0;
+	unsigned int bs = 512;
+    unsigned int count = 1;
+    char mode = 'w';
 
-	while((opt = getopt(argc, argv, "m:f:b:c:")) != -1)
+	while((opt = getopt(argc, argv, "m:b:c:")) != -1)
 	{
 		switch(opt) {
 			case 'm' :
 				if(sscanf(optarg, "%c", &mode) != 1)
 				{
 					fprintf(stderr, "%s: bad mode\n", optarg);
-					return 1;
-				}
-				break;
-			case 'f' :
-				if(sscanf(optarg, "%s", &filename) != 1)
-				{
-					fprintf(stderr, "%s: bad filename\n", optarg);
 					return 1;
 				}
 				break;
@@ -125,15 +118,30 @@ int main(int argc, char **argv)
 				}
 				break;
 			default:
-				fprintf(stderr, "Usage: %s -m mode -f filepath -b blocksize -c number of block\n", argv[0]);
+				fprintf(stderr, "Usage: %s [-m mode] [-b blocksize] [-c number of block] filename\n", argv[0]);
 				exit(EXIT_FAILURE);
 		}
 	}
 
-	if(argc <= 1)
-		return printf("Usage: %s -m mode -f filepath -b blocksize -c number of block\n", argv[0]), 1;
+    argc -= optind;
+    argv += optind;
+	
+    if(argc > 0)
+    {
+        if(argc != 1)
+		    return printf("Usage: ./mydd [-m mode] [-b blocksize] [-c number of block] filename\n"), 1;
 
-	printf("%c - %s - %d - %d\n\n", mode, filename, bs, count);
+        if(sscanf(argv[0], "%s", &filename) != 1)
+		{
+			fprintf(stderr, "%s: bad filename\n", argv[0]);
+			return 1;
+		}
+    }
+    else
+	    return printf("Usage: ./mydd [-m mode] [-b blocksize] [-c number of block] filename\n"), 1;
+
+
+	printf("Parameters : %c - %d - %d - %s\n\n", mode, bs, count, filename);
 
 #ifndef BENCH
     if(mode == 'w')
