@@ -156,10 +156,9 @@ int main(int argc, char **argv)
     else
 	    return printf("Usage: ./mydd [-m mode] [-b blocksize] [-c number of block] filename\n"), 1;
 
-
-	printf("Parameters : %c - %d - %d - %s\n\n", mode, bs, count, filename);
-
 #ifndef BENCH
+	printf("Parameters : %c - %d - %d - %s\n\n", mode, bs, count, filename);
+    
     if(bs*count < 1e3)
         factor = B;
     else if(bs*count < 1e6)
@@ -179,6 +178,8 @@ int main(int argc, char **argv)
         exit(EXIT_FAILURE);
     }
 #else
+	printf("%c %d %d\n", mode, bs, count);
+    
     if(mode == 'w')
         for(int i = 0; i < 10; ++i)
             write_file(filename, bs, count);
