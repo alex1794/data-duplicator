@@ -10,12 +10,18 @@ fi
 mntdir=$(echo $1 | sed 's/\/$//')
 
 bsarray=( 500 1000 2000 5000 10000 20000 50000 100000 200000 500000 1000000 2000000 5000000 )
-countarray=( 1 5 10 50 100 500 1000 5000 10000 )
+countarray=( 1 5 10 50 100 500 1000 5000 10000 50000 100000 500000 1000000 5000000 10000000 )
 
 for i in "${bsarray[@]}"; do
     ./ddbench -b $i -c 1 $mntdir/benchfile >> bs_c1.txt
     rm $mntdir/benchfile
 done
+
+for i in "${countarray[@]}"; do
+    ./ddbench -b 500 -c $i $mntdir/benchfile >> bs500_c.txt
+    rm $mntdir/benchfile
+done
+
 
 python3 graphe.py
 
