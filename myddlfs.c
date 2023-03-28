@@ -6,6 +6,10 @@
 #include <time.h>
 #include <sys/types.h>
 
+enum unit {B, KB, MB, GB};
+const char *sunit[4] = {"B", "KB", "MB", "GB"};
+const double funit[4] = {1, 1e-3, 1e-6, 1e-9};
+enum unit factor = GB;
 
 double elapsed(struct timespec start, struct timespec stop)
 {
@@ -16,7 +20,10 @@ void write_file(char *filename, unsigned int bs, unsigned int count)
 {
 	struct timespec start;
     struct timespec stop;
-    double filesize = (double)bs*count*1e-9; // Gigabyte
+    double filesize = (double)bs*count;
+#ifndef BENCH
+    filesize *= funit[factor]; // for good unit representation
+#endif
 	char *buf = malloc(sizeof(char) * bs);
     for(int i = 0; i < bs; ++i)
         buf[i] = rand() % 100;	
@@ -36,7 +43,11 @@ void write_file(char *filename, unsigned int bs, unsigned int count)
 
 	double wrtime = elapsed(start, stop);
     double wrbw = filesize / wrtime;
-	printf("Write of %.2lf GB file : %lf seconds, %lf GB/s\n", filesize, wrtime, wrbw);
+#ifndef BENCH
+	printf("Write of %.2lf %s file : %lf seconds, %lf %s/s\n", filesize, sunit[factor], wrtime, wrbw, sunit[factor]);
+#else
+    printf("%lu %.8lf %.2lf\n", (unsigned long)filesize, wrtime, wrbw);
+#endif
 
     free(buf);
 	
@@ -60,7 +71,7 @@ void read_file(char *filename, unsigned int bs)
 	}
 
     off_t filesize = lseek(fd, 0, SEEK_END);
-    printf("Filesize : %lu bytes\n", filesize);
+    //printf("Filesize : %lu bytes\n", filesize);
     lseek(fd, 0, SEEK_SET);
 
 	clock_gettime(CLOCK_MONOTONIC_RAW, &start);
@@ -71,8 +82,13 @@ void read_file(char *filename, unsigned int bs)
     //printf("%x\n", buf[0]);
 
 	double rdtime = elapsed(start, stop);
-    double rdbw = (double)filesize * 1e-9 / rdtime;
-	printf("Read of %.2lf GB file : %lf seconds, %lf GB/s\n", (double)filesize*1e-9, rdtime, rdbw);
+    double rdbw = (double)filesize / rdtime;
+#ifndef BENCH
+    rdbw *= funit[factor];
+	printf("Read of %.2lf %s file : %lf seconds, %lf %s/s\n", (double)filesize*funit[factor], sunit[factor], rdtime, rdbw, sunit[factor]);
+#else
+    printf("%lu %.8lf %.2lf\n", filesize, rdtime, rdbw);
+#endif
 
     free(buf);
 	
@@ -144,6 +160,15 @@ int main(int argc, char **argv)
 	printf("Parameters : %c - %d - %d - %s\n\n", mode, bs, count, filename);
 
 #ifndef BENCH
+    if(bs*count < 1e3)
+        factor = B;
+    else if(bs*count < 1e6)
+        factor = KB;
+    else if(bs*count < 1e9)
+        factor = MB;
+    else
+        factor = GB;
+
     if(mode == 'w')
         write_file(filename, bs, count);
     else if (mode == 'r')
