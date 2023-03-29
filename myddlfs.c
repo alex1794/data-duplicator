@@ -20,6 +20,8 @@ void write_file(char *filename, unsigned int bs, unsigned int count)
 {
 	struct timespec start;
     struct timespec stop;
+    struct timespec fsync_start;
+    struct timespec fsync_stop;
     double filesize = (double)bs*count;
 #ifndef BENCH
     filesize *= funit[factor]; // for good unit representation
@@ -38,12 +40,15 @@ void write_file(char *filename, unsigned int bs, unsigned int count)
 	clock_gettime(CLOCK_MONOTONIC_RAW, &start);
 	for(unsigned int i = 0; i < count; ++i)
 		write(fd, buf, bs);
+	clock_gettime(CLOCK_MONOTONIC_RAW, &fsync_start);
 	fsync(fd);
+	clock_gettime(CLOCK_MONOTONIC_RAW, &fsync_stop);
     clock_gettime(CLOCK_MONOTONIC_RAW, &stop);
 
 	double wrtime = elapsed(start, stop);
     double wrbw = filesize / wrtime;
 #ifndef BENCH
+    printf("Fsync time : %lf seconds\n", elapsed(fsync_start, fsync_stop));
 	printf("Write of %.2lf %s file : %lf seconds, %lf %s/s\n", filesize, sunit[factor], wrtime, wrbw, sunit[factor]);
 #else
     printf("%lu %.8lf %.2lf\n", (unsigned long)filesize, wrtime, wrbw);
