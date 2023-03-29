@@ -18,19 +18,26 @@ for filename, labels in filelist.items():
 
     data = np.array(np.array_split(data, lbs))
     mean_array = np.empty((lbs, 3))
+    min_array = np.empty((lbs, 3))
+    max_array = np.empty((lbs, 3))
     for i in range(lbs):
-        temp = np.array(data[i,1:], dtype=float)
+        temp = np.array(data[i,1:], dtype=float)      
         mean_array[i] = np.mean(temp, axis=0)
+        min_array[i] = np.min(temp, axis=0)
+        max_array[i] = np.max(temp, axis=0)
 
+    time_yerr = np.concatenate(([mean_array[:,1] - min_array[:,1]], [max_array[:,1] - mean_array[:,1]]), axis=0)
+    bw_yerr   = np.concatenate(([mean_array[:,2] - min_array[:,2]], [max_array[:,2] - mean_array[:,2]]), axis=0)
+    
     fig = plt.figure(figsize=(15,12))
     if filename == "bs_c1.txt":
-        plt.plot(head_array[:,1].astype(float), mean_array[:,1])
+        plt.errorbar(head_array[:,1].astype(float), mean_array[:,1], yerr=time_yerr, ecolor="red", elinewidth=1.0, capsize=2.0, capthick=1.0)
         plt.xscale('log')
     elif filename == "bs500_c.txt":
-        plt.plot(head_array[:,2].astype(float), mean_array[:,1])
+        plt.errorbar(head_array[:,2].astype(float), mean_array[:,1], yerr=time_yerr, ecolor="red", elinewidth=1.0, capsize=2.0, capthick=1.0)
         plt.xscale('log')
     elif filename == "bs_c_1g.txt":
-        plt.plot([str(i[1])+"/"+str(i[2]) for i in head_array], mean_array[:,1])
+        plt.errorbar([str(i[1])+"/"+str(i[2]) for i in head_array], mean_array[:,1], yerr=time_yerr, ecolor="red", elinewidth=1.0, capsize=2.0, capthick=1.0)
         plt.xticks(rotation=45)
     plt.xlabel(labels[0])
     plt.ylabel("Time [s]")
@@ -39,13 +46,13 @@ for filename, labels in filelist.items():
 
     fig = plt.figure(figsize=(15,12))
     if filename == "bs_c1.txt":
-        plt.plot(head_array[:,1].astype(float), mean_array[:,2])
+        plt.errorbar(head_array[:,1].astype(float), mean_array[:,2], yerr=bw_yerr, ecolor="red", elinewidth=1.0, capsize=2.0, capthick=1.0)
         plt.xscale('log')
     elif filename == "bs500_c.txt":
-        plt.plot(head_array[:,2].astype(float), mean_array[:,2])
+        plt.errorbar(head_array[:,2].astype(float), mean_array[:,2], yerr=bw_yerr, ecolor="red", elinewidth=1.0, capsize=2.0, capthick=1.0)
         plt.xscale('log')
     elif filename == "bs_c_1g.txt":
-        plt.plot([str(i[1])+"/"+str(i[2]) for i in head_array], mean_array[:,2])
+        plt.errorbar([str(i[1])+"/"+str(i[2]) for i in head_array], mean_array[:,2], yerr=bw_yerr, ecolor="red", elinewidth=1.0, capsize=2.0, capthick=1.0)
         plt.xticks(rotation=45)
     plt.xlabel(labels[0])
     plt.ylabel("Bandwidth[B/s]")
