@@ -27,7 +27,9 @@ done
 
 ## filesize=1G with count=2000000 to 200 and bs=500B to 5M
 for (( i=0; i<13; i++ )); do
+    echo $i
     ./ddbench -b ${bsarray[$i]} -c ${gigarray[$i]} $mntdir/benchfile >> bs_c_1g.txt
+    rm $mntdor/benchfile
 done
 
 python3 graphe.py
