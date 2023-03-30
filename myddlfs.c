@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <fcntl.h>
 #include <string.h>
 #include <unistd.h>
@@ -16,7 +17,7 @@ double elapsed(struct timespec start, struct timespec stop)
     return (double)stop.tv_sec - (double)start.tv_sec + ( (double)stop.tv_nsec - (double)start.tv_nsec )*1e-9;
 }
 
-void write_file(char *filename, unsigned int bs, unsigned int count)
+void write_file(char *filename, uint64_t bs, uint64_t count)
 {
 	struct timespec start;
     struct timespec stop;
@@ -27,7 +28,7 @@ void write_file(char *filename, unsigned int bs, unsigned int count)
     filesize *= funit[factor]; // for good unit representation
 #endif
 	char *buf = malloc(sizeof(char) * bs);
-    for(unsigned int i = 0; i < bs; ++i)
+    for(uint64_t i = 0; i < bs; ++i)
         buf[i] = rand() % 100;
 
     int fd = open(filename, O_RDWR | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
@@ -38,7 +39,7 @@ void write_file(char *filename, unsigned int bs, unsigned int count)
 	}
 
 	clock_gettime(CLOCK_MONOTONIC_RAW, &start);
-	for(unsigned int i = 0; i < count; ++i)
+	for(uint64_t i = 0; i < count; ++i)
 		write(fd, buf, bs);
 	clock_gettime(CLOCK_MONOTONIC_RAW, &fsync_start);
 	fsync(fd);
@@ -51,7 +52,7 @@ void write_file(char *filename, unsigned int bs, unsigned int count)
     printf("Fsync time : %lf seconds\n", elapsed(fsync_start, fsync_stop));
 	printf("Write of %.2lf %s file : %lf seconds, %lf %s/s\n", filesize, sunit[factor], wrtime, wrbw, sunit[factor]);
 #else
-    printf("%lu %.8lf %.2lf\n", (unsigned long)filesize, wrtime, wrbw);
+    printf("%lu %.8lf %.2lf\n", (uint64_t)filesize, wrtime, wrbw);
 #endif
 
     free(buf);
@@ -62,7 +63,7 @@ void write_file(char *filename, unsigned int bs, unsigned int count)
 	//printf("Close time of %s : %lf seconds\n", filename, elapsed(start, stop));
 }
 
-void read_file(char *filename, unsigned int bs)
+void read_file(char *filename, uint64_t bs)
 {
 	struct timespec start;
     struct timespec stop;
@@ -110,8 +111,8 @@ int main(int argc, char **argv)
 
     int opt;
 	char filename[50];
-	unsigned int bs = 512;
-    unsigned int count = 1;
+	uint64_t bs = 512;
+    uint64_t count = 1;
     char mode = 'w';
 
 	while((opt = getopt(argc, argv, "m:b:c:")) != -1)
@@ -125,14 +126,14 @@ int main(int argc, char **argv)
 				}
 				break;
 			case 'b' :
-				if(sscanf(optarg, "%u", &bs) != 1)
+				if(sscanf(optarg, "%lu", &bs) != 1)
 				{
 					fprintf(stderr, "%s: bad block size\n", optarg);
 					return 1;
 				}
 				break;
 			case 'c':
-				if(sscanf(optarg, "%u", &count) != 1)
+				if(sscanf(optarg, "%lu", &count) != 1)
 				{
 					fprintf(stderr, "%s: bad number of block", optarg);
 					return 1;
@@ -162,7 +163,7 @@ int main(int argc, char **argv)
 	    return printf("Usage: ./mydd [-m mode] [-b blocksize] [-c number of block] filename\n"), 1;
 
 #ifndef BENCH
-	printf("Parameters : %c - %d - %d - %s\n\n", mode, bs, count, filename);
+	printf("Parameters : %c - %lu - %lu - %s\n\n", mode, bs, count, filename);
     
     if(bs*count < 1e3)
         factor = B;
@@ -183,7 +184,7 @@ int main(int argc, char **argv)
         exit(EXIT_FAILURE);
     }
 #else
-	printf("%c %d %d\n", mode, bs, count);
+	printf("%c %lu %lu\n", mode, bs, count);
     
     if(mode == 'w')
         for(int i = 0; i < 10; ++i)
