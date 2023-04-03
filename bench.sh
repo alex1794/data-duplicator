@@ -7,10 +7,10 @@ fi
 
 filesize=$((1*1024*1024*1024))
 
-## filesize=1G with count=2000000 to 200 and bs=500B to 5M
-for (( bs=512; bs<16*1024*1024; bs=bs*2 )); do
-    ./ddbench -m $1 -b $bs -c $((filesize/bs)) $2
+## filesize=1G with count=2*1024*1024 to 64 and bs=512B to 16MB
+for (( bs=512; bs<=16*1024*1024; bs=bs*2 )); do
+    ./mydd -m $1 -b $bs -c $((filesize/bs)) $2
 done
 
-#python3 graphe.py
+python3 graphe.py
 
