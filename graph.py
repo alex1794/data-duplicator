@@ -12,14 +12,17 @@ def dataread(filename):
     data = np.array(data, dtype=float)
     return data[:,0].astype(int), data[:,1].astype(int), data[:,2].astype(int), data[:,3].astype(int), data[:,4], data[:,5]
 
-mode, bs, count, filesize, time, bw = dataread(sys.argv[1])
+filename = sys.argv[1]
+mode, bs, count, filesize, time, bw = dataread(filename)
 
 marray = ["read", "write"]
 
 fig = plt.figure(figsize=(15,12))
-plt.plot(bs.astype(str), bw/(1024**2), marker='+', markeredgecolor='r', markersize=12, label=marray[mode[0]])
+plt.plot(bs[mode==1].astype(str), bw[mode==1]/(1024**2), marker='+', markeredgecolor='r', markersize=12, label=marray[1])
+plt.plot(bs[mode==0].astype(str), bw[mode==0]/(1024**2), marker='+', markeredgecolor='r', markersize=12, label=marray[0])
+plt.yscale("log")
 plt.xlabel("Blocksize [B]")
 plt.ylabel("Bandwidth [MB/s]")
-plt.title("Bandwidth as a function of blocksize")
+plt.title("Bandwidth as a function of blocksize ("+filename[6:-4]+")")
 plt.legend(loc='best')
-plt.savefig("bw_bs.png")
+plt.savefig("bw_"+filename[6:-4]+".png")
