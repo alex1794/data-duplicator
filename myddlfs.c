@@ -33,7 +33,7 @@ void write_file(char *filename, uint64_t bs, uint64_t count)
 		buf[i] = rand() % 100;
 
     	int fd = open(filename, O_RDWR | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
-	if (!fd) {
+	if (fd == -1) {
 		perror("open fd for writing");
 		exit(EXIT_FAILURE);
 	}
@@ -69,7 +69,7 @@ void read_file(char *filename, uint64_t bs, uint64_t count)
 	}
 
 	int fd = open(filename, O_RDONLY);
-	if (!fd) {
+	if (fd == -1) {
 		perror("open fd for reading");
 		exit(EXIT_FAILURE);
 	}
