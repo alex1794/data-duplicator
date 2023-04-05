@@ -6,6 +6,8 @@
 #include <unistd.h>
 #include <time.h>
 
+#define ALIGNMENT 4096
+
 char usagestr[] = 
 	"Usage: ./mydd [-m mode] [-b blocksize] [-c block count] filename\n";
 
@@ -23,7 +25,7 @@ void write_file(char *filename, int flags, uint64_t bs, uint64_t count)
 	double wrtime = 0;
 	double wrbw = 0;
 
-	char *buf = malloc(sizeof(char) * bs);
+	char *buf = aligned_alloc(ALIGNMENT, sizeof(char) * bs);
 	if (!buf) {
 		perror("malloc");
 		exit(EXIT_FAILURE);
@@ -33,7 +35,7 @@ void write_file(char *filename, int flags, uint64_t bs, uint64_t count)
 		buf[i] = rand() % 100;
 
 	int fd = open(filename, flags, S_IRUSR | S_IWUSR);
-	if (fd == -1) {
+	if (fd < 0) {
 		perror("open fd for writing");
 		exit(EXIT_FAILURE);
 	}
@@ -41,7 +43,10 @@ void write_file(char *filename, int flags, uint64_t bs, uint64_t count)
 	clock_gettime(CLOCK_MONOTONIC_RAW, &start);
 	
 	for (uint64_t i = 0; i < count; ++i)
-		write(fd, buf, bs);
+		if (write(fd, buf, bs) < 0) {
+			perror("write");
+			exit(EXIT_FAILURE);
+		}
 	
 	fsync(fd);
 	clock_gettime(CLOCK_MONOTONIC_RAW, &stop);
@@ -62,14 +67,14 @@ void read_file(char *filename, int flags, uint64_t bs, uint64_t count)
 	double rdtime = 0;
 	double rdbw = 0;
 
-	char *buf = malloc(sizeof(char) * bs);
+	char *buf = aligned_alloc(ALIGNMENT, sizeof(char) * bs);
 	if (!buf) {
 		perror("malloc");
 		exit(EXIT_FAILURE);
 	}
 
 	int fd = open(filename, flags);
-	if (fd == -1) {
+	if (fd < 0) {
 		perror("open fd for reading");
 		exit(EXIT_FAILURE);
 	}
@@ -77,7 +82,10 @@ void read_file(char *filename, int flags, uint64_t bs, uint64_t count)
 	clock_gettime(CLOCK_MONOTONIC_RAW, &start);
 	
 	for (uint64_t i = 0; i < count; i++)
-		read(fd, buf, bs);
+		if (read(fd, buf, bs) < 0) {
+			perror("read");
+			exit(EXIT_FAILURE);
+		}
 	
 	fsync(fd);
 	clock_gettime(CLOCK_MONOTONIC_RAW, &stop);
@@ -97,9 +105,9 @@ int main(int argc, char **argv)
 	uint64_t bs = 512;
 	uint64_t count = 1;
 	char mode = 'w';
-    int flags = O_WRONLY | O_CREAT | O_TRUNC;
+	int flags = O_WRONLY | O_CREAT | O_TRUNC;
 
-	while ((opt = getopt(argc, argv, "m:b:c:d")) != -1) {
+	while ((opt = getopt(argc, argv, "m:db:c:")) != -1) {
 		switch (opt) {
 		case 'm' :
 			if(sscanf(optarg, "%c", &mode) != 1)
@@ -108,9 +116,12 @@ int main(int argc, char **argv)
 				return 1;
 			}
 
-            if (mode == 'r')
-                flags = O_RDONLY;
+			if (mode == 'r')
+				flags = O_RDONLY;
 
+			break;
+		case 'd':
+			flags |= O_DIRECT;
 			break;
 		case 'b' :
 			if(sscanf(optarg, "%lu", &bs) != 1)
@@ -125,9 +136,6 @@ int main(int argc, char **argv)
 				fprintf(stderr, "%s: bad number of block", optarg);
 				return 1;
 			}
-			break;
-		case 'd':
-			flags |= O_DIRECT;
 			break;
 		default:
 			fprintf(stderr, usagestr);
