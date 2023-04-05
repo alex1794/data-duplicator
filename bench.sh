@@ -5,17 +5,14 @@ if [ -z "$1" ] || [ -z "$2" ] || [ -z "$3" ]; then
     exit
 fi
 
-filesize=$((1*1024*1024*1024))
+filesize=$((4*1024*1024*1024))
 mode=$1
 direct=""
-bsmin=512
-bsmax=$((16*1024*1024))
+bsmin=4096
+bsmax=$((2*1024*1024*1024))
 if [ "$1" = "wd" ] || [ "$1" = "rd" ]; then
     echo -n "DIRECT "
-    filesize=$((4*1024*1024*1024))
     direct="-d"
-    bsmin=4096
-    bsmax=$((2*1024*1024*1024))
 fi
 
 ## filesize=1G with count=2*1024*1024 to 64 and bs=512B to 16MB
