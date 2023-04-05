@@ -16,8 +16,8 @@ make
 Bench examples : Same logic by adding a "d" for direct IO
 ```
 make
-./bench.sh w sda_ext4 /mnt/sdaext4/file1    #Writing benchmark
-./bench.sh r sda_ext4 /mnt/sdaext4/file1    #Reading benchmark
-./bench.sh rd sda_ext4_direct /mnt/sdaext4/file1 #Direct reading benchmark
-python3 graph.py bench_sda_ext4_wr.txt    #Plotting graphs
+./bench.sh w sda_ext4 /mnt/sdaext4/file1          #Writing benchmark
+./bench.sh r sda_ext4 /mnt/sdaext4/file1          #Reading benchmark
+./bench.sh rd sda_ext4_direct /mnt/sdaext4/file1  #Direct reading benchmark
+python3 graph.py bench_sda_ext4_wr.txt            #Plotting graphs
 ```
