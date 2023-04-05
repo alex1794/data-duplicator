@@ -1,8 +1,8 @@
 # Basic Unix command dd benchmark
 
-`myddlfs.c` is a basic C program that reads and writes to devices (sda, ram, ...) or file like Unix command dd`. Arguments are the mode (read or write), the block size in bytes, the number of block, if O_DIRECT or not and and the device or file (/dev/sda0, /dev/ram0, /mnt/sdaxfs/file0, /mnt/ramext4/file0, ...). It gives time in seconds and bandwith in bytes per second.
-`bench.sh` repeats the execution of `myddlfs.c` with different block sizes and different number of block but with a same size of total read or written memory. For each repetition, bandwidth is sent to a txt file for further processing and the cache is cleared.
-`graph.py` plots the graphs corresponding to the measurements taken previously.
+`myddlfs.c` is a basic C program that reads and writes to devices (sda, ram, ...) or file like Unix command `dd`. Arguments are the mode (read or write), the block size in bytes, the number of block, if O_DIRECT or not and and the device or file (/dev/sda0, /dev/ram0, /mnt/sdaxfs/file0, /mnt/ramext4/file0, ...). It gives time in seconds and bandwith in bytes per second.  
+`bench.sh` repeats the execution of `myddlfs.c` with different block sizes and different number of block but with a same size of total read or written memory. For each repetition, bandwidth is sent to a txt file for further processing and the cache is cleared.  
+`graph.py` plots the graphs corresponding to the measurements taken previously.  
 
 Examples : 
 ```
@@ -16,8 +16,8 @@ make
 Bench examples : Same logic by adding a "d" for direct IO
 ```
 make
-./bench.sh w sda_ext4 /mnt/sdaext4/file1
-./bench.sh r sda_ext4 /mnt/sdaext4/file1
-./bench.sh rd sda_ext4_direct /mnt/sdaext4/file1
-python3 graph.py bench_sda_ext4_wr.txt
+./bench.sh w sda_ext4 /mnt/sdaext4/file1    #Writing benchmark
+./bench.sh r sda_ext4 /mnt/sdaext4/file1    #Reading benchmark
+./bench.sh rd sda_ext4_direct /mnt/sdaext4/file1 #Direct reading benchmark
+python3 graph.py bench_sda_ext4_wr.txt    #Plotting graphs
 ```
