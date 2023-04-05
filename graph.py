@@ -18,10 +18,13 @@ mode, bs, count, filesize, time, bw = dataread(filename)
 marray = ["read", "write"]
 
 fig = plt.figure(figsize=(15,12))
-plt.plot(bs[mode==1].astype(str), bw[mode==1]/(1024**2), marker='+', markeredgecolor='r', markersize=12, label=marray[1])
-plt.plot(bs[mode==0].astype(str), bw[mode==0]/(1024**2), marker='+', markeredgecolor='r', markersize=12, label=marray[0])
+plt.plot(bs[mode==1].astype(str), bw[mode==1]/(1024**2), marker='+', markeredgecolor="darkblue", markersize=12, label=marray[1])
+plt.plot(bs[mode==0].astype(str), bw[mode==0]/(1024**2), marker='+', markeredgecolor="darkorange", markersize=12, label=marray[0])
 #plt.yscale("log")
-if filename[6:9] == "ram":
+if filename[6:16] == "ram_lustre":
+    plt.ylim(0,4500)
+    plt.xticks(rotation=25)
+elif filename[6:9] == "ram":
     plt.ylim(0,2550)
 else:
     plt.ylim(0,200)
