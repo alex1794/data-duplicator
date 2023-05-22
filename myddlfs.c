@@ -5,8 +5,18 @@
 #include <string.h>
 #include <unistd.h>
 #include <time.h>
+#include <pthread.h>
 
 #define ALIGNMENT 4096
+
+struct Param {
+	uint64_t bs;
+	uint64_t count;
+	unsigned int nthread;
+	int flags;
+	char mode;
+	char filename[50];
+};
 
 char usagestr[] = 
 	"Usage: ./mydd [-m mode] [-d] [-b blocksize] [-c block count] [-w thread count] filename\n";
@@ -96,50 +106,80 @@ void read_file(char *filename, int flags, uint64_t bs, uint64_t count)
 
 	free(buf);
 	close(fd);
-}    
+}
+
+void *thread_kernel(void *arg)
+{
+	struct Param *param = (struct Param *) arg;
+
+	if (param->mode == 'w') {
+        	write_file(param->filename, param->flags, param->bs, param->count);
+	} else if (param->mode == 'r') {
+        	read_file(param->filename, param->flags, param->bs, param->count);
+	} else {
+        	fprintf(stderr, "Bad mode : read mode (r) and write mode (w)\n");
+        	exit(EXIT_FAILURE);
+	}
+
+	return NULL;
+}
+
+void process_bench(struct Param *param)
+{
+	pthread_t tid[param->nthread];
+	
+	srand(getpid());
+
+	for (unsigned int i = 0; i < param->nthread; ++i)
+		pthread_create(&tid[i], NULL, thread_kernel, (void *) param);
+
+	for (unsigned int i = 0; i < param->nthread; ++i)
+		pthread_join(tid[i], NULL);
+}
 
 int main(int argc, char **argv)
 {
 	int opt;
-	char filename[50];
-	uint64_t bs = 512;
-	uint64_t count = 1;
-	char mode = 'w';
-	int flags = O_WRONLY | O_CREAT | O_TRUNC;
-	uint32_t nthread = 1;
+	
+	struct Param param;
+	param.bs = 512;
+	param.count = 1;
+	param.nthread = 1;
+	param.flags = O_WRONLY | O_CREAT | O_TRUNC;
+	param.mode = 'w';
 
 	while ((opt = getopt(argc, argv, "m:db:c:w:")) != -1) {
 		switch (opt) {
 		case 'm' :
-			if(sscanf(optarg, "%c", &mode) != 1)
+			if(sscanf(optarg, "%c", &param.mode) != 1)
 			{
 				fprintf(stderr, "%s: bad mode\n", optarg);
 				return 1;
 			}
 
-			if (mode == 'r')
-				flags = O_RDONLY;
+			if (param.mode == 'r')
+				param.flags = O_RDONLY;
 
 			break;
 		case 'd':
-			flags |= O_DIRECT;
+			param.flags |= O_DIRECT;
 			break;
 		case 'b' :
-			if(sscanf(optarg, "%lu", &bs) != 1) {
+			if(sscanf(optarg, "%lu", &param.bs) != 1) {
 				fprintf(stderr, "%s: bad block size\n", optarg);
 				return 1;
 			}
 
 			break;
 		case 'c':
-			if(sscanf(optarg, "%lu", &count) != 1) {
+			if(sscanf(optarg, "%lu", &param.count) != 1) {
 				fprintf(stderr, "%s: bad number of block\n", optarg);
 				return 1;
 			}
 
 			break;
 		case 'w':
-			if(sscanf(optarg, "%u", &nthread) != 1) {
+			if(sscanf(optarg, "%u", &param.nthread) != 1) {
 				fprintf(stderr, "%s: bad number of thread\n", optarg);
 				return 1;
 			}
@@ -159,7 +199,7 @@ int main(int argc, char **argv)
 			return printf(usagestr), 1;
 		}
 
-		if (sscanf(argv[0], "%s", filename) != 1) {
+		if (sscanf(argv[0], "%s", param.filename) != 1) {
 			fprintf(stderr, "%s: bad filename\n", argv[0]);
 			return 1;
 		}
@@ -167,18 +207,9 @@ int main(int argc, char **argv)
 		return printf(usagestr), 1;
 	}
 
-	printf("%d %lu %lu ", (mode == 'r') ? 0 : 1, bs, count);
+	printf("%d %lu %lu %u\n", (param.mode == 'r') ? 0 : 1, param.bs, param.count, param.nthread);
 	
-	srand(getpid());
-
-	if (mode == 'w') {
-        	write_file(filename, flags, bs, count);
-	} else if (mode == 'r') {
-        	read_file(filename, flags, bs, count);
-	} else {
-        	fprintf(stderr, "Bad mode : read mode (r) and write mode (w)\n");
-        	exit(EXIT_FAILURE);
-	}
+	process_bench(&param);
  
 	return 0;
 }
