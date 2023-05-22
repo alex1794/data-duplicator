@@ -18,6 +18,13 @@ struct Param {
 	char filename[50];
 };
 
+struct Thread {
+	struct Param param;
+	unsigned int num;
+	char filename[60];
+	pthread_t tid;
+};
+
 char usagestr[] = 
 	"Usage: ./mydd [-m mode] [-d] [-b blocksize] [-c block count] [-w thread count] filename\n";
 
@@ -53,8 +60,8 @@ void write_file(char *filename, int flags, uint64_t bs, uint64_t count)
 	clock_gettime(CLOCK_MONOTONIC_RAW, &start);
 	
 	for (uint64_t i = 0; i < count; ++i)
-		if (write(fd, buf, bs) < 0) {
-			perror("write");
+		if (pwrite64(fd, buf, bs, bs*i) < 0) {
+			perror("pwrite64");
 			exit(EXIT_FAILURE);
 		}
 	
@@ -110,12 +117,13 @@ void read_file(char *filename, int flags, uint64_t bs, uint64_t count)
 
 void *thread_kernel(void *arg)
 {
-	struct Param *param = (struct Param *) arg;
+	struct Thread *thr = (struct Thread *) arg;
+	struct Param param = thr->param;
 
-	if (param->mode == 'w') {
-        	write_file(param->filename, param->flags, param->bs, param->count);
-	} else if (param->mode == 'r') {
-        	read_file(param->filename, param->flags, param->bs, param->count);
+	if (param.mode == 'w') {
+        	write_file(thr->filename, param.flags, param.bs, param.count);
+	} else if (param.mode == 'r') {
+        	read_file(thr->filename, param.flags, param.bs, param.count);
 	} else {
         	fprintf(stderr, "Bad mode : read mode (r) and write mode (w)\n");
         	exit(EXIT_FAILURE);
@@ -126,15 +134,34 @@ void *thread_kernel(void *arg)
 
 void process_bench(struct Param *param)
 {
-	pthread_t tid[param->nthread];
+	struct timespec start, stop;
+	double time = 0;
+	double bw = 0;
+	uint64_t filesize = param->bs * param->count * param->nthread;
+
+	struct Thread *thr = aligned_alloc(128, sizeof(struct Thread) * param->nthread);
 	
 	srand(getpid());
 
-	for (unsigned int i = 0; i < param->nthread; ++i)
-		pthread_create(&tid[i], NULL, thread_kernel, (void *) param);
+	clock_gettime(CLOCK_MONOTONIC_RAW, &start);
+
+	for (unsigned int i = 0; i < param->nthread; ++i) {
+		thr[i].param = *param;
+		thr[i].num = i;
+		snprintf(thr[i].filename, 60, "%s%u", param->filename, i);
+		pthread_create(&(thr[i].tid), NULL, thread_kernel, (void *) &thr[i]);
+	}
 
 	for (unsigned int i = 0; i < param->nthread; ++i)
-		pthread_join(tid[i], NULL);
+		pthread_join(thr[i].tid, NULL);
+
+	clock_gettime(CLOCK_MONOTONIC_RAW, &stop);
+
+	time = elapsed(start, stop);
+	bw = (double) filesize / time;
+	printf("\n\n%lu %.8lf %.2lf\n", filesize, time, bw);
+
+	free(thr);
 }
 
 int main(int argc, char **argv)
@@ -142,7 +169,7 @@ int main(int argc, char **argv)
 	int opt;
 	
 	struct Param param;
-	param.bs = 512;
+	param.bs = 4096;
 	param.count = 1;
 	param.nthread = 1;
 	param.flags = O_WRONLY | O_CREAT | O_TRUNC;
