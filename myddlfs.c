@@ -9,7 +9,7 @@
 #define ALIGNMENT 4096
 
 char usagestr[] = 
-	"Usage: ./mydd [-m mode] [-b blocksize] [-c block count] filename\n";
+	"Usage: ./mydd [-m mode] [-d] [-b blocksize] [-c block count] [-w thread count] filename\n";
 
 double elapsed(struct timespec start, struct timespec stop)
 {
@@ -106,8 +106,9 @@ int main(int argc, char **argv)
 	uint64_t count = 1;
 	char mode = 'w';
 	int flags = O_WRONLY | O_CREAT | O_TRUNC;
+	uint32_t nthread = 1;
 
-	while ((opt = getopt(argc, argv, "m:db:c:")) != -1) {
+	while ((opt = getopt(argc, argv, "m:db:c:w:")) != -1) {
 		switch (opt) {
 		case 'm' :
 			if(sscanf(optarg, "%c", &mode) != 1)
@@ -124,18 +125,25 @@ int main(int argc, char **argv)
 			flags |= O_DIRECT;
 			break;
 		case 'b' :
-			if(sscanf(optarg, "%lu", &bs) != 1)
-			{
+			if(sscanf(optarg, "%lu", &bs) != 1) {
 				fprintf(stderr, "%s: bad block size\n", optarg);
 				return 1;
 			}
+
 			break;
 		case 'c':
-			if(sscanf(optarg, "%lu", &count) != 1)
-			{
-				fprintf(stderr, "%s: bad number of block", optarg);
+			if(sscanf(optarg, "%lu", &count) != 1) {
+				fprintf(stderr, "%s: bad number of block\n", optarg);
 				return 1;
 			}
+
+			break;
+		case 'w':
+			if(sscanf(optarg, "%u", &nthread) != 1) {
+				fprintf(stderr, "%s: bad number of thread\n", optarg);
+				return 1;
+			}
+
 			break;
 		default:
 			fprintf(stderr, usagestr);
